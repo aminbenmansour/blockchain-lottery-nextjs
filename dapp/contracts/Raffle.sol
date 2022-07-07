@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
-import "@chainlink/contracts/src/v0.8/VRFCoordinatorV2Interface.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 
 error Raffle__NotEnoughEthEntered();
 
@@ -12,25 +12,27 @@ contract Raffle is VRFConsumerBaseV2 {
     address payable[] private players;
     VRFCoordinatorV2Interface private immutable vrfCoordinator;
 
-    bytes32 private immutable gasLane // limit per gas unit
+    bytes32 private immutable gasLane; // limit per gas unit
     uint64 private immutable subscriptionId;
     uint32 private immutable callbackGasLimit; // limit gas price for fulfillRandomWords
     uint16 private constant REQUEST_CONFIRMATIONS = 3; // blocks to wait for
     uint32 private constant NUM_WORDS = 1; // number of requested random numbers
 
     event RaffleEnter(address indexed player);
+    event RequestRandomWinner(uint256 indexed requestId);
 
     constructor(address _vrfCoordinatorV2,
                 uint256 _entranceFee,
                 bytes32 _gasLane,
                 uint64 _subscriptionId,
                 uint32 _callbackGasLimit
-    ) VRFConsumerBaseV2(vrfCoordinatorV2) {
+    ) VRFConsumerBaseV2(_vrfCoordinatorV2) {
         entranceFee = _entranceFee;
-        vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
+
+        vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinatorV2);
         gasLane = _gasLane;
         subscriptionId = _subscriptionId;
-        callbackGasLimit = _callbackGasLimit
+        callbackGasLimit = _callbackGasLimit;
     }
 
     function enterRaffle() public payable {
@@ -45,11 +47,13 @@ contract Raffle is VRFConsumerBaseV2 {
     function requestRandomWinner() external {
         uint256 requestId = vrfCoordinator.requestRandomWords(
             gasLane,
-            s_subscriptionId,
-            requestConfirmations,
+            subscriptionId,
+            REQUEST_CONFIRMATIONS,
             callbackGasLimit,
-            numWords
+            NUM_WORDS
         );
+
+        emit RequestRandomWinner(requestId);
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
