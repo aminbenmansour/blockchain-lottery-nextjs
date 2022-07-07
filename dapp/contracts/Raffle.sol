@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.4;
 
+import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+
 error Raffle__NotEnoughEthEntered();
 
-contract Raffle {
+contract Raffle is VRFConsumerBaseV2 {
 
     uint256 private immutable entranceFee;
     address payable[] private players;
 
     event RaffleEnter(address indexed player);
-    constructor(uint256 _entranceFee) {
+
+
+    constructor(address vrfCoordinatorV2, uint256 _entranceFee) VRFConsumerBaseV2(vrfCoordinatorV2) {
         entranceFee = _entranceFee;
     }
 
@@ -22,7 +26,11 @@ contract Raffle {
         emit RaffleEnter(msg.sender);
     }
 
-    function pickRandomWinner() public returns(address) {
+    function requestRandomWinner() external returns(address) {
+        
+    }
+
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
         
     }
 
