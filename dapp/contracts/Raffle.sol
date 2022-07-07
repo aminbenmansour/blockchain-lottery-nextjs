@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import "@chainlink/contracts/src/v0.8/VRFCoordinatorV2Interface.sol";
 
 error Raffle__NotEnoughEthEntered();
 
@@ -9,12 +10,14 @@ contract Raffle is VRFConsumerBaseV2 {
 
     uint256 private immutable entranceFee;
     address payable[] private players;
+    VRFCoordinatorV2Interface private immutable vrfCoordinator;
 
     event RaffleEnter(address indexed player);
 
 
     constructor(address vrfCoordinatorV2, uint256 _entranceFee) VRFConsumerBaseV2(vrfCoordinatorV2) {
         entranceFee = _entranceFee;
+        vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator);
     }
 
     function enterRaffle() public payable {
@@ -26,7 +29,7 @@ contract Raffle is VRFConsumerBaseV2 {
         emit RaffleEnter(msg.sender);
     }
 
-    function requestRandomWinner() external returns(address) {
+    function requestRandomWinner() external {
         
     }
 
