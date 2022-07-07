@@ -12,12 +12,25 @@ contract Raffle is VRFConsumerBaseV2 {
     address payable[] private players;
     VRFCoordinatorV2Interface private immutable vrfCoordinator;
 
+    bytes32 private immutable gasLane // limit per gas unit
+    uint64 private immutable subscriptionId;
+    uint32 private immutable callbackGasLimit; // limit gas price for fulfillRandomWords
+    uint16 private constant REQUEST_CONFIRMATIONS = 3; // blocks to wait for
+    uint32 private constant NUM_WORDS = 1; // number of requested random numbers
+
     event RaffleEnter(address indexed player);
 
-
-    constructor(address vrfCoordinatorV2, uint256 _entranceFee) VRFConsumerBaseV2(vrfCoordinatorV2) {
+    constructor(address _vrfCoordinatorV2,
+                uint256 _entranceFee,
+                bytes32 _gasLane,
+                uint64 _subscriptionId,
+                uint32 _callbackGasLimit
+    ) VRFConsumerBaseV2(vrfCoordinatorV2) {
         entranceFee = _entranceFee;
-        vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator);
+        vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
+        gasLane = _gasLane;
+        subscriptionId = _subscriptionId;
+        callbackGasLimit = _callbackGasLimit
     }
 
     function enterRaffle() public payable {
@@ -30,12 +43,19 @@ contract Raffle is VRFConsumerBaseV2 {
     }
 
     function requestRandomWinner() external {
-        
+        uint256 requestId = vrfCoordinator.requestRandomWords(
+            gasLane,
+            s_subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            numWords
+        );
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
-        
-    }
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
+        internal
+        override
+    {}
 
     function getEntranceFee() public view returns (uint256) {
         return entranceFee;
@@ -44,5 +64,5 @@ contract Raffle is VRFConsumerBaseV2 {
     function getPlayer(uint256 _index) public view returns (address) {
         return players[_index];
     }
-    
+
 }
