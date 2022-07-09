@@ -17,6 +17,7 @@ contract Raffle is VRFConsumerBaseV2 {
     uint32 private immutable callbackGasLimit; // limit gas price for fulfillRandomWords
     uint16 private constant REQUEST_CONFIRMATIONS = 3; // blocks to wait for
     uint32 private constant NUM_WORDS = 1; // number of requested random numbers
+    address private recentWinner;
 
     event RaffleEnter(address indexed player);
     event RequestRandomWinner(uint256 indexed requestId);
@@ -56,10 +57,11 @@ contract Raffle is VRFConsumerBaseV2 {
         emit RequestRandomWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
-        internal
-        override
-    {}
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+        uint256 indexOfWinner = randomWords[0] % players.length;
+        address payable winner = players[indexOfWinner];
+        recentWinner = winner;
+    }
 
     function getEntranceFee() public view returns (uint256) {
         return entranceFee;
@@ -67,6 +69,10 @@ contract Raffle is VRFConsumerBaseV2 {
 
     function getPlayer(uint256 _index) public view returns (address) {
         return players[_index];
+    }
+
+    function getRecentWinner() public view returns (address) {
+        return recentWinner;
     }
 
 }
