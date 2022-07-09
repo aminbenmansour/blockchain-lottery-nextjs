@@ -8,6 +8,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 
 error Raffle__NotEnoughEthEntered();
 error Raffle__TransferFailed();
+error Raffle__NotOpen();
 
 contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     
@@ -59,6 +60,10 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
             revert Raffle__NotEnoughEthEntered();
         }
 
+        if (raffleState != RaffleState.OPEN) {
+            revert Raffle__NotOpen();
+        }
+
         players.push(payable(msg.sender));
         emit RaffleEnter(msg.sender);
     }
@@ -86,6 +91,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     function performUpkeep(bytes calldata performData) external override {}
 
     function requestRandomWinner() external {
+        raffleState = RaffleState.CALCULATING;
         uint256 requestId = vrfCoordinator.requestRandomWords(
             gasLane,
             subscriptionId,
@@ -104,7 +110,9 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         uint256 indexOfWinner = randomWords[0] % players.length;
         address payable winner = players[indexOfWinner];
         recentWinner = winner;
-
+        
+        raffleState = RaffleState.OPEN;
+        
         (bool success, ) = winner.call{value: address(this).balance}("");
 
         if (!success) {
