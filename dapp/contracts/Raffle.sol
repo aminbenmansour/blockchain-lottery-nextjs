@@ -112,6 +112,8 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         recentWinner = winner;
         
         raffleState = RaffleState.OPEN;
+
+        players = new address payable[](0);
         
         (bool success, ) = winner.call{value: address(this).balance}("");
 
