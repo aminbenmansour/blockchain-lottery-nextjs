@@ -29,9 +29,11 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     uint32 private constant NUM_WORDS = 1; // number of requested random numbers
     
     // Lottery variables
+    uint256 private lastTimestamp;
     uint256 private immutable entranceFee;
     address payable[] private players;
     address private recentWinner;
+    uint256 private immutable interval;
     RaffleState private raffleState;
 
     // events
@@ -44,7 +46,8 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         uint256 _entranceFee,
         bytes32 _gasLane,
         uint64 _subscriptionId,
-        uint32 _callbackGasLimit
+        uint32 _callbackGasLimit,
+        uint256 _interval
     ) VRFConsumerBaseV2(_vrfCoordinatorV2) {
         entranceFee = _entranceFee;
 
@@ -53,6 +56,9 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         subscriptionId = _subscriptionId;
         callbackGasLimit = _callbackGasLimit;
         raffleState = RaffleState.OPEN;
+
+        lastTimestamp = block.timestamp;
+        interval = _interval;
     }
 
     function enterRaffle() public payable {
@@ -86,9 +92,18 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
             bool upkeepNeeded,
             bytes memory /* performData */
         )
-    {}
+    {
+        bool isOpen = (raffleState == RaffleState.OPEN);
+        bool timePassed = ((block.timestamp - lastTimestamp) > interval);
+        bool hasPlayers = players.length != 0;
+        bool hasBalance = address(this).balance > 0;
+        upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance);
+    }
 
-    function performUpkeep(bytes calldata performData) external override {}
+    function performUpkeep(bytes calldata performData) 
+    external override {
+
+    }
 
     function requestRandomWinner() external {
         raffleState = RaffleState.CALCULATING;
@@ -114,7 +129,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         raffleState = RaffleState.OPEN;
 
         players = new address payable[](0);
-        
+
         (bool success, ) = winner.call{value: address(this).balance}("");
 
         if (!success) {
