@@ -4,11 +4,13 @@ pragma solidity ^0.8.4;
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 
+import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
+
 error Raffle__NotEnoughEthEntered();
 error Raffle__TransferFailed();
 
-contract Raffle is VRFConsumerBaseV2 {
-
+contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
+    
     uint256 private immutable entranceFee;
     address payable[] private players;
     VRFCoordinatorV2Interface private immutable vrfCoordinator;
@@ -24,11 +26,12 @@ contract Raffle is VRFConsumerBaseV2 {
     event RequestRandomWinner(uint256 indexed requestId);
     event WinnerPicked(address indexed winner);
 
-    constructor(address _vrfCoordinatorV2,
-                uint256 _entranceFee,
-                bytes32 _gasLane,
-                uint64 _subscriptionId,
-                uint32 _callbackGasLimit
+    constructor(
+        address _vrfCoordinatorV2,
+        uint256 _entranceFee,
+        bytes32 _gasLane,
+        uint64 _subscriptionId,
+        uint32 _callbackGasLimit
     ) VRFConsumerBaseV2(_vrfCoordinatorV2) {
         entranceFee = _entranceFee;
 
@@ -47,6 +50,28 @@ contract Raffle is VRFConsumerBaseV2 {
         emit RaffleEnter(msg.sender);
     }
 
+    /**
+     * @dev This is the function that the Chainlink Keeper ndes call
+     * they look for the `UpkeepNeeded` to return true.
+     * The following should be true:
+     * 1. Our time interval should have passed
+     * 2. The lottery should have at least one player and should have ETH
+     * 3. The lottery should be in an "open" state
+     * 4. Our subscription should be funded by LINK
+     */
+    function checkUpkeep(
+        bytes calldata /* checkData */
+    )
+        external
+        override
+        returns (
+            bool upkeepNeeded,
+            bytes memory /* performData */
+        )
+    {}
+
+    function performUpkeep(bytes calldata performData) external override {}
+    
     function requestRandomWinner() external {
         uint256 requestId = vrfCoordinator.requestRandomWords(
             gasLane,
@@ -59,12 +84,15 @@ contract Raffle is VRFConsumerBaseV2 {
         emit RequestRandomWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256 /* requestId */, uint256[] memory randomWords) internal override {
+    function fulfillRandomWords(
+        uint256, /* requestId */
+        uint256[] memory randomWords
+    ) internal override {
         uint256 indexOfWinner = randomWords[0] % players.length;
         address payable winner = players[indexOfWinner];
         recentWinner = winner;
 
-        (bool success, ) = winner.call{ value: address(this).balance }("");
+        (bool success, ) = winner.call{value: address(this).balance}("");
 
         if (!success) {
             revert Raffle__TransferFailed();
