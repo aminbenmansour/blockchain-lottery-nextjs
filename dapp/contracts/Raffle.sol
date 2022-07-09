@@ -11,17 +11,29 @@ error Raffle__TransferFailed();
 
 contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     
-    uint256 private immutable entranceFee;
-    address payable[] private players;
+    // Type declarations
+    enum RaffleState {
+        OPEN,
+        CALCULATING
+    }
+
+    // ChainLink Chains
     VRFCoordinatorV2Interface private immutable vrfCoordinator;
 
+    // ChainLink VRF variables
     bytes32 private immutable gasLane; // limit per gas unit
     uint64 private immutable subscriptionId;
     uint32 private immutable callbackGasLimit; // limit gas price for fulfillRandomWords
     uint16 private constant REQUEST_CONFIRMATIONS = 3; // blocks to wait for
     uint32 private constant NUM_WORDS = 1; // number of requested random numbers
+    
+    // Lottery variables
+    uint256 private immutable entranceFee;
+    address payable[] private players;
     address private recentWinner;
+    RaffleState private raffleState;
 
+    // events
     event RaffleEnter(address indexed player);
     event RequestRandomWinner(uint256 indexed requestId);
     event WinnerPicked(address indexed winner);
@@ -39,6 +51,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         gasLane = _gasLane;
         subscriptionId = _subscriptionId;
         callbackGasLimit = _callbackGasLimit;
+        raffleState = RaffleState.OPEN;
     }
 
     function enterRaffle() public payable {
@@ -71,7 +84,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     {}
 
     function performUpkeep(bytes calldata performData) external override {}
-    
+
     function requestRandomWinner() external {
         uint256 requestId = vrfCoordinator.requestRandomWords(
             gasLane,
