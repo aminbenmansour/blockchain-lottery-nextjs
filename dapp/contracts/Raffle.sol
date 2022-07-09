@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.7;
 
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
@@ -9,6 +9,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 error Raffle__NotEnoughEthEntered();
 error Raffle__TransferFailed();
 error Raffle__NotOpen();
+error Raffle__UpkeppNotNeeded(uint256 currentBalance, uint256 numPlayers, uint256 raffleState);
 
 contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     
@@ -84,9 +85,9 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
      * 4. Our subscription should be funded by LINK
      */
     function checkUpkeep(
-        bytes calldata /* checkData */
+        bytes memory /* checkData */
     )
-        external
+        public
         view
         override
         returns (
@@ -101,12 +102,16 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance);
     }
 
-    function performUpkeep(bytes calldata /* performData */) 
-    external override {
-
-    }
-
-    function requestRandomWinner() external {
+    function performUpkeep(bytes calldata /* performData */) external {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if(!upkeepNeeded) {
+            revert Raffle__UpkeppNotNeeded(
+                address(this).balance,
+                players.length,
+                uint256(raffleState)
+            );
+        }
+        
         raffleState = RaffleState.CALCULATING;
         uint256 requestId = vrfCoordinator.requestRandomWords(
             gasLane,
@@ -130,6 +135,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         raffleState = RaffleState.OPEN;
 
         players = new address payable[](0);
+        lastTimestamp = block.timestamp;
 
         (bool success, ) = winner.call{value: address(this).balance}("");
 
