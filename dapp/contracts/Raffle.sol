@@ -5,6 +5,7 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 
 error Raffle__NotEnoughEthEntered();
+error Raffle__TransferFailed();
 
 contract Raffle is VRFConsumerBaseV2 {
 
@@ -21,6 +22,7 @@ contract Raffle is VRFConsumerBaseV2 {
 
     event RaffleEnter(address indexed player);
     event RequestRandomWinner(uint256 indexed requestId);
+    event WinnerPicked(address indexed winner);
 
     constructor(address _vrfCoordinatorV2,
                 uint256 _entranceFee,
@@ -61,6 +63,14 @@ contract Raffle is VRFConsumerBaseV2 {
         uint256 indexOfWinner = randomWords[0] % players.length;
         address payable winner = players[indexOfWinner];
         recentWinner = winner;
+
+        (bool success, ) = winner.call{ value: address(this).balance }("");
+
+        if (!success) {
+            revert Raffle__TransferFailed();
+        }
+
+        emit WinnerPicked(winner);
     }
 
     function getEntranceFee() public view returns (uint256) {
