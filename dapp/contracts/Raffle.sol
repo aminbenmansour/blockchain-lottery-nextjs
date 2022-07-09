@@ -87,6 +87,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         bytes calldata /* checkData */
     )
         external
+        view
         override
         returns (
             bool upkeepNeeded,
@@ -100,7 +101,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance);
     }
 
-    function performUpkeep(bytes calldata performData) 
+    function performUpkeep(bytes calldata /* performData */) 
     external override {
 
     }
