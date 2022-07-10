@@ -11,6 +11,11 @@ error Raffle__TransferFailed();
 error Raffle__NotOpen();
 error Raffle__UpkeppNotNeeded(uint256 currentBalance, uint256 numPlayers, uint256 raffleState);
 
+/** @title A sample Lottery contract
+ *  @author Amine Ben Mansour
+ *  @notice This contract is for creating untemperable decentralized smart contract
+ *  @dev This implements Chainlink VRF v2 and Chainlink Keepers
+ */
 contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     
     // Type declarations
