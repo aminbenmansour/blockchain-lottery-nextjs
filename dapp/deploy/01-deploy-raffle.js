@@ -11,11 +11,13 @@ const { developmentChains, networkConfig } = require("../helper-hardhat-config")
         const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
         vrfCoordinatorV2Address = vrfCoordinatorV2Mock.address
     } else {
-        vrfCoordinatorV2Address = networkConfig.chainId.vrfCoordinatorV2
+        vrfCoordinatorV2Address = networkConfig[chainId]["vrfCoordinatorV2"]
     }
 
     const entranceFee = networkConfig.chainId.entranceFee
-    const args = [vrfCoordinatorV2Address, entranceFee]
+    const gasLane = networkConfig[chainId]["gasLane"]
+    
+    const args = [vrfCoordinatorV2Address, entranceFee, gasLane]
     const Raffle = await deploy("Raffle", {
         from: deployer,
         args: args,
