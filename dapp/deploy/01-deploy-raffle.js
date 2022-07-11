@@ -14,9 +14,11 @@ const { developmentChains, networkConfig } = require("../helper-hardhat-config")
         vrfCoordinatorV2Address = networkConfig.chainId.vrfCoordinatorV2
     }
 
+    const entranceFee = networkConfig.chainId.entranceFee
+    const args = [vrfCoordinatorV2Address, entranceFee]
     const Raffle = await deploy("Raffle", {
         from: deployer,
-        args: [],
+        args: args,
         log: true,
         waitConfirmations: network.config.blockConfirmations || 1,
     })
