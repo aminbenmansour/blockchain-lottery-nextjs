@@ -22,15 +22,24 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     } else {
         vrfCoordinatorV2Address = networkConfig[chainId]["vrfCoordinatorV2"]
         subscriptionId = networkConfig[chainId]["subscriptionId"]
-        
+
         // Link token on a real netwok before funding the subscription
 
     }
 
     const entranceFee = networkConfig.chainId.entranceFee
     const gasLane = networkConfig[chainId]["gasLane"]
+    const callbackGasLimit = networkConfig[chainId]["callbackGasLimit"]
+    const interval = networkConfig[chainId]["interval"]
     
-    const args = [vrfCoordinatorV2Address, entranceFee, gasLane]
+    const args = [
+        vrfCoordinatorV2Address,
+        entranceFee,
+        gasLane,
+        subscriptionId,
+        callbackGasLimit,
+        interval,
+    ]
     const Raffle = await deploy("Raffle", {
         from: deployer,
         args: args,
