@@ -19,7 +19,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             vrfCoordinatorV2Mock = ethers.getContract("VRFCoordinatorV2Mock", deployer)
         })
 
-        describe("constructor", async () => {
+        describe("constructor", () => {
             it("initializes the raffle correctly", async () => {
                 const raffleState = await raffle.getRaffleState()
 
@@ -28,7 +28,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             })
         })
 
-        describe("enterRaffle", async () => {
+        describe("enterRaffle", () => {
             it("reverts when you don't pay enough", async () => {
                 await expect(raffle.enterRaffle()).to.be.revertedWith(
                     "Raffle__NotEnoughEthEntered"
@@ -58,7 +58,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             })
         })
 
-        describe("checkUpkeep", async () => {
+        describe("checkUpkeep", () => {
             it("returns false if people haven't sent any ETH", async () => {
                 await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
                 await network.provider.send("evm_mine", [])
@@ -95,6 +95,21 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 await network.provider.request({ method: "evm_mine", params: [] })
                 const { upkeepNeeded } = await raffle.callStatic.checkUpkeep("0x") // upkeepNeeded = (timePassed && isOpen && hasBalance && hasPlayers)
                 assert(upkeepNeeded)
+            })
+
+            describe("performUpkeep", () => {
+                it("can only run if checkupkeep is true", async () => {
+                    await raffle.enterRaffle({ value: raffleEntranceFee })
+                    await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+                    await network.provider.request({ method: "evm_mine", params: [] })
+                    const tx = await raffle.performUpkeep("0x") 
+                    assert(tx)
+                })
+                it("reverts if checkup is false", async () => {
+                    await expect(raffle.performUpkeep("0x")).to.be.revertedWith( 
+                        "Raffle__UpkeepNotNeeded"
+                    )
+                })
             })
         })
     })
