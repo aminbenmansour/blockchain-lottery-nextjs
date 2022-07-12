@@ -6,7 +6,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
     ? describe.skip
     : describe("Raffle", async () => {
         let chainId = network.config.chainId
-        let raffle, vrfCoordinatorV2Mock, deployer, raffleEntranceFee
+        let raffle, vrfCoordinatorV2Mock, deployer, raffleEntranceFee, interval
 
         beforeEach(async () => {
             deployer = (await getNamedAccounts()).deployer
@@ -14,6 +14,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 
             raffle = await ethers.getContract("Raffle", deployer)
             raffleEntranceFee = raffle.getEntranceFee()
+            interval = await raffle.getInterval()
 
             vrfCoordinatorV2Mock = ethers.getContract("VRFCoordinatorV2Mock", deployer)
         })
@@ -21,7 +22,6 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
         describe("constructor", async () => {
             it("initializes the raffle correctly", async () => {
                 const raffleState = await raffle.getRaffleState()
-                const interval = await raffle.getInterval()
 
                 assert.equal(raffleState.toString(), "0")
                 assert.equal(interval.toString(), networkConfig[chainId]["interval"])
@@ -43,7 +43,18 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             })
 
             it("emits event on enter", async () => {
-                await expect(raffle.enterRaffle({ value: raffleEntranceFee })).to.emit(raffle, "raffleEnter")
+                await expect(raffle.enterRaffle({ value: raffleEntranceFee })).to.emit(raffle, "RaffleEnter")
+            })
+
+            it("doesn't allow entrance when raffle is calculating", async () => {
+                await raffle.enterRaffle( {value: raffleEntranceFee} )
+                await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+                await network.provider.send("evm_mine", [])
+                // await network.provider.request({method: "evm_mine"}, params: [])
+
+                // checkUpkeep gives true, we can call performUpkeep
+                await raffle.performUpkeep([])
+                await expect(raffle.enterRaffle( {value: raffleEntranceFee} )).to.be.revertedWith("Raffle__NotOpen")
             })
         })
     })
