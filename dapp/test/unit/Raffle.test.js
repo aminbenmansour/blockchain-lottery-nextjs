@@ -124,5 +124,15 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                     assert(raffleState == 1) // 0 = open, 1 = calculating
                 })
             })
+           
+        })
+
+        describe("fulfillRandomWords", async () => {
+            beforeEach(async () => {
+                await raffle.enterRaffle({ value: raffleEntranceFee })
+                await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+                await network.provider.request({ method: "evm_mine", params: [] })
+              })
+            })
         })
     })
