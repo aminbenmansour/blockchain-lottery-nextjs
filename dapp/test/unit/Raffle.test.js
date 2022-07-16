@@ -146,22 +146,41 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             })
 
             it("picks a winner, resets the lottery and sends money", async () => {
-                const additionalEntrants = 3
-                const startingAccountIndex = 1 // deployer = 0
+                const additionalEntrances = 3
+                const startingIndex = 1 // deployer = 0
                 const accounts = await ethers.getSigners()
 
 
                 for (let i = startingIndex; i < startingIndex + additionalEntrances; i++) {
-                    raffle = raffleContract.connect(accounts[i])
+                    raffle = raffle.connect(accounts[i])
                     await raffle.enterRaffle({ value: raffleEntranceFee })
                 }
 
-                const startingTimeStamp = await raffle.getLastTimeStamp()
+                const startingTimeStamp = await raffle.getLatestTimeStamp()
                 
                 await new Promise(async (resolve, reject) => {
                     raffle.once("WinnerPicked", async () => {
                         try {
-                            
+                            const recentWinner = await raffle.getRecentWinner()
+                            const raffleState = await raffle.getRaffleState()
+                            const winnerBalance = await accounts[2].getBalance()
+                            const endingTimeStamp = await raffle.getLastTimeStamp()
+                            await expect(raffle.getPlayer(0)).to.be.reverted
+
+                            assert.equal(recentWinner.toString(), accounts[2].address)
+                              assert.equal(raffleState, 0)
+                              assert.equal(
+                                  winnerBalance.toString(), 
+                                  startingBalance // startingBalance + ( (raffleEntranceFee * additionalEntrances) + raffleEntranceFee )
+                                      .add(
+                                          raffleEntranceFee
+                                              .mul(additionalEntrances)
+                                              .add(raffleEntranceFee)
+                                      )
+                                      .toString()
+                              )
+                              assert(endingTimeStamp > startingTimeStamp)
+                              resolve()
                         } catch (error) {
                             reject(error)
                         }
