@@ -144,5 +144,40 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                     vrfCoordinatorV2Mock.fulfillRandomWords(1, raffle.address) // reverts if not fulfilled
                 ).to.be.revertedWith("nonexistent request")
             })
+
+            it("picks a winner, resets the lottery and sends money", async () => {
+                const additionalEntrants = 3
+                const startingAccountIndex = 1 // deployer = 0
+                const accounts = await ethers.getSigners()
+
+
+                for (let i = startingIndex; i < startingIndex + additionalEntrances; i++) {
+                    raffle = raffleContract.connect(accounts[i])
+                    await raffle.enterRaffle({ value: raffleEntranceFee })
+                }
+
+                const startingTimeStamp = await raffle.getLastTimeStamp()
+                
+                await new Promise(async (resolve, reject) => {
+                    raffle.once("WinnerPicked", async () => {
+                        try {
+                            
+                        } catch (error) {
+                            reject(error)
+                        }
+
+                        resolve()
+                    })
+
+                    const tx = await raffle.performUpkeep("0x")
+                    const txReceipt = await tx.wait(1)
+                    const startingBalance = await accounts[2].getBalance()
+                    await vrfCoordinatorV2Mock.fulfillRandomWords(
+                        txReceipt.events[1].args.requestId,
+                        raffle.address
+                    )
+                })
+            
+            })
         })
     })
