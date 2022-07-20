@@ -3,8 +3,9 @@ import { useEffect } from "react";
 
 const ManualHeader = () => {
 
-    const { enableWeb3, account, isWeb3Enabled, Moralis, deactivateWeb3 } = useMoralis()
+    const { enableWeb3, account, isWeb3Enabled, Moralis, deactivateWeb3, isWeb3EnableLoading } = useMoralis()
 
+    // Hook for connecting wallet
     useEffect(() => {
         if (isWeb3Enabled) return
         if (typeof window !== "undefined")
@@ -13,6 +14,7 @@ const ManualHeader = () => {
  
     }, [isWeb3Enabled])
 
+    // Hook for disconnecting wallet
     useEffect(() => {
         Moralis.onAccountChanged((account) => {
             console.log(`account changed to ${account}`)
@@ -35,6 +37,8 @@ const ManualHeader = () => {
                 await enableWeb3()
                 window.localStorage.setItem("connected", "inject")
             }}
+
+            disabled = {isWeb3EnableLoading}
         > Connect </button>
         
         )}
