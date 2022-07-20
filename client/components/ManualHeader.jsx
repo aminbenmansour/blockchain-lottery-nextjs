@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 const ManualHeader = () => {
 
-    const { enableWeb3, account, isWeb3Enabled, Moralis } = useMoralis()
+    const { enableWeb3, account, isWeb3Enabled, Moralis, deactivateWeb3 } = useMoralis()
 
     useEffect(() => {
         if (isWeb3Enabled) return
@@ -18,6 +18,9 @@ const ManualHeader = () => {
             console.log(`account changed to ${account}`)
             if (account == null) {
                 window.localStorage.removeItem("connected")
+                deactivateWeb3()
+                console.log("No account found!")
+                
             }
         })
     }, [])
