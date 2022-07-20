@@ -6,8 +6,10 @@ const ManualHeader = () => {
     const { enableWeb3, account, isWeb3Enabled } = useMoralis()
 
     useEffect(() => {
-        if(isWeb3Enabled) return
-        // enableWeb3()
+        if (isWeb3Enabled) return
+        if (typeof window !== "undefined")
+            if (window.localStorage.getItem("connected"))
+                enableWeb3()
  
     }, [isWeb3Enabled])
 
@@ -19,6 +21,7 @@ const ManualHeader = () => {
         <button 
             onClick={async () => {
                 await enableWeb3()
+                window.localStorage.setItem("connected", "inject")
             }}
         > Connect </button>
         
