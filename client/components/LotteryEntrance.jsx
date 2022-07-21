@@ -11,6 +11,8 @@ const LotteryEntrance = () => {
     const raffleAddress = chainId in contractAddresses ? contractAddresses[chainId][0] : null
 
     const [entranceFee, setEntranceFee] = useState("0")
+    const [numberOfPlayers, setNumberOfPlayers] = useState("0")
+    const [recentWinner, setRecentWinner] = useState("0")
 
     const dispatch = useNotification();
 
@@ -45,6 +47,11 @@ const LotteryEntrance = () => {
         params: {},
     })
 
+    useEffect(() => {
+        if (isWeb3Enabled) {
+            updateUIValues()
+        }
+    }, [isWeb3Enabled])
 
     async function updateUIValues() {
         // Another way we could make a contract call:
@@ -60,6 +67,7 @@ const LotteryEntrance = () => {
         setEntranceFee(entranceFeeFromCall)
         setNumberOfPlayers(numPlayersFromCall)
         setRecentWinner(recentWinnerFromCall)
+        console.log(recentWinnerFromCall)
     }
 
     const handleSuccess = async (tx) => {
@@ -78,14 +86,18 @@ const LotteryEntrance = () => {
         })
     }
 
+    
     return ( 
         <div>
             {raffleAddress ? (
                 <>
                     <div>
                         Fee for lottery entrance is { ethers.utils.formatEther(entranceFee) } ETH
-                        
                     </div>
+
+                    <div>The current number of players is: {numberOfPlayers}</div>
+                    <div>The most previous winner was: {recentWinner}</div>
+
                     <div>
                         <button onClick={async () => {
                             await enterRaffle({
