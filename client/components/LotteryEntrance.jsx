@@ -1,3 +1,6 @@
+import { useWeb3Contract } from "react-moralis";
+import { abi, contractAddress } from "../constants"
+
 const LotteryEntrance = () => {
 
     // const { runContractFunction: enterRaffle } =
