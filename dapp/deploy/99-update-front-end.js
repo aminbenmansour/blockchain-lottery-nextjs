@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat")
+const { ethers, network } = require("hardhat")
 const { fs } = require("fs")
 
 const FRONT_END_ADDRESSES_FILE = "../../client/constants/contractAddresses.json"
@@ -13,6 +13,20 @@ module.exports = async () => {
 
 async function updateContractAddresses() {
     const raffle = await ethers.getContract("Raffle")
+    const chainId = network.config.chainId.toString()
 
     const currentAddresses = JSON.parse(fs.readFileSync(FRONT_END_ADDRESSES_FILE, "utf8"))
+
+    if (chainId in contractAddress) {
+        if (!currentAddresses[chainId].includes(raffle.address)) {
+            currentAddresses[chainId].push(raffle.address)
+        }
+    }
+    {
+        currentAddresses[chainId] = [raffle.address]
+    }
+
+    fs.writeFileSync(FRONT_END_ADDRESSES_FILE, JSON.stringify(currentAddresses))
+
+    module.exports.tags = ["all", "frontend"]
 }
