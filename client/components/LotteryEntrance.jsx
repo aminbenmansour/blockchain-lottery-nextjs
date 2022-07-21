@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import { abi, contractAddresses } from "../constants"
 
@@ -6,7 +6,10 @@ const LotteryEntrance = () => {
 
     const { chainId: chainIdHex, isWeb3Enabled } = useMoralis()
     const chainId = parseInt(chainIdHex)
+    console.log(chainId)
     const raffleAddress = chainId in contractAddresses ? contractAddresses[chainId][0] : null
+
+    const [entranceFee, setEntranceFee] = useState("0")
 
     // const { runContractFunction: enterRaffle } = useWeb3Contract({
     //     abi: abi,
@@ -26,14 +29,17 @@ const LotteryEntrance = () => {
     useEffect(() => {
         if (isWeb3Enabled) {
             async function updateUI() {
-                const entranceFeeFromContract = await getEntranceFee()
+                const entranceFeeFromContract = (await getEntranceFee()).toString()
+                console.log(entranceFee)
+                setEntranceFee(entranceFeeFromContract)
             }
+            updateUI()
         }
     }, [isWeb3Enabled])
 
     return ( 
         <div>
-
+            { entranceFee }
         </div>
      );
 }
