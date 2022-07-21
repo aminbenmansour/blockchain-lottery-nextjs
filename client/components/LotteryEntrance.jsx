@@ -1,23 +1,22 @@
 import { useEffect, useState } from "react";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import { abi, contractAddresses } from "../constants"
-
+import { ethers } from "ethers"
 const LotteryEntrance = () => {
 
     const { chainId: chainIdHex, isWeb3Enabled } = useMoralis()
     const chainId = parseInt(chainIdHex)
-    console.log(chainId)
     const raffleAddress = chainId in contractAddresses ? contractAddresses[chainId][0] : null
 
     const [entranceFee, setEntranceFee] = useState("0")
 
-    // const { runContractFunction: enterRaffle } = useWeb3Contract({
-    //     abi: abi,
-    //     contractAddress: raffleAddress,
-    //     functionName: "enterRaffle",
-    //     params: { },
-    //     msgValue: ,
-    // });
+    const { runContractFunction: enterRaffle } = useWeb3Contract({
+        abi: abi,
+        contractAddress: raffleAddress,
+        functionName: "enterRaffle",
+        params: { },
+        msgValue: entranceFee,
+    });
 
     const { runContractFunction: getEntranceFee } = useWeb3Contract({
         abi: abi,
@@ -30,7 +29,6 @@ const LotteryEntrance = () => {
         if (isWeb3Enabled) {
             async function updateUI() {
                 const entranceFeeFromContract = (await getEntranceFee()).toString()
-                console.log(entranceFee)
                 setEntranceFee(entranceFeeFromContract)
             }
             updateUI()
@@ -39,7 +37,23 @@ const LotteryEntrance = () => {
 
     return ( 
         <div>
-            { entranceFee }
+            {raffleAddress ? (
+                <>
+                    <div>
+                        Fee for lottery entrance is { ethers.utils.formatEther(entranceFee) } ETH
+                        
+                    </div>
+                    <div>
+                        <button onClick={async () => {
+                            await enterRaffle()
+                        }}>Enter Raffle</button>
+                    </div>
+                </>
+            ) : (
+                <div>
+                    No raffle address found!
+                </div>
+            )}
         </div>
      );
 }
