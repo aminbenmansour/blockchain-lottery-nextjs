@@ -13,7 +13,10 @@ module.exports = async () => {
 }
 
 async function updateAbi() {
+<<<<<<< HEAD
     const raffle = await ethers.getContract("Raffle")
+=======
+>>>>>>> 992907115d53e4e99a419079598938bde965ebe8
     fs.writeFileSync(FRONT_END_ABI_FILE, ethers.interface.format(ethers.utils.FormatTypes.json))
 }
 
